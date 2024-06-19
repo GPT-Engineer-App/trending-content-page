@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Container, Heading, Select, VStack, Text, Spinner, HStack, Button } from '@chakra-ui/react';
 import axios from 'axios';
-import { getRottenTomatoesRating, getImdbRating, getOmdbData, getTmdbData } from '../api/ratings';
+import { getOmdbData, getTmdbData } from '../api/ratings';
 
 const MostWatchedContent = () => {
   const [content, setContent] = useState([]);
@@ -20,11 +20,9 @@ const MostWatchedContent = () => {
           params: { filter, sort },
         });
         const contentWithRatings = await Promise.all(response.data.content.map(async (item) => {
-          const rottenTomatoesRating = await getRottenTomatoesRating(item.title);
-          const imdbRating = await getImdbRating(item.title);
           const omdbData = await getOmdbData(item.title);
           const tmdbData = await getTmdbData(item.title);
-          return { ...item, rottenTomatoesRating, imdbRating, omdbData, tmdbData };
+          return { ...item, omdbData, tmdbData };
         }));
         setContent(contentWithRatings);
         setWeeklySummary(response.data.weeklySummary);
@@ -85,8 +83,6 @@ const MostWatchedContent = () => {
                 <Text>Views: {item.views}</Text>
                 <Text>Rating: {item.rating}</Text>
                 <Text>Date: {item.date}</Text>
-                <Text>Rotten Tomatoes Rating: {item.rottenTomatoesRating}</Text>
-                <Text>IMDb Rating: {item.imdbRating}</Text>
                 {item.omdbData && (
                   <>
                     <Text>OMDb Plot: {item.omdbData.Plot}</Text>
