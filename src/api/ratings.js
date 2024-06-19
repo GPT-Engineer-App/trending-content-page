@@ -1,33 +1,26 @@
 import axios from 'axios';
 
-const RAPIDAPI_KEY = process.env.REACT_APP_RAPIDAPI_KEY;
-const IMDB_API_KEY = process.env.REACT_APP_IMDB_API_KEY;
+const OMDB_API_KEY = process.env.REACT_APP_OMDB_API_KEY;
+const TMDB_API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
-const getRottenTomatoesRating = async (title) => {
+const getOmdbData = async (title) => {
   try {
-    const response = await axios.get('https://api.example.com/rotten-tomatoes', {
-      headers: {
-        'x-rapidapi-key': RAPIDAPI_KEY,
-      },
-      params: {
-        title,
-      },
-    });
-    return response.data.rating;
+    const response = await axios.get(`http://www.omdbapi.com/?t=${title}&apikey=${OMDB_API_KEY}`);
+    return response.data;
   } catch (error) {
-    console.error('Error fetching Rotten Tomatoes rating:', error);
+    console.error('Error fetching OMDb data:', error);
     return null;
   }
 };
 
-const getImdbRating = async (title) => {
+const getTmdbData = async (title) => {
   try {
-    const response = await axios.get(`https://imdb-api.com/en/API/SearchTitle/${IMDB_API_KEY}/${title}`);
-    return response.data.results[0].imDbRating;
+    const response = await axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${title}`);
+    return response.data.results[0];
   } catch (error) {
-    console.error('Error fetching IMDb rating:', error);
+    console.error('Error fetching TMDb data:', error);
     return null;
   }
 };
 
-export { getRottenTomatoesRating, getImdbRating };
+export { getOmdbData, getTmdbData };
