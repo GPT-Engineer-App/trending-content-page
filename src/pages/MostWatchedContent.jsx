@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Container, Heading, Select, VStack, Text, Spinner, HStack, Button } from '@chakra-ui/react';
 import axios from 'axios';
+import { getRottenTomatoesRating, getImdbRating } from '../api/ratings';
 
 const MostWatchedContent = () => {
   const [content, setContent] = useState([]);
@@ -8,6 +9,8 @@ const MostWatchedContent = () => {
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('views');
   const [weeklySummary, setWeeklySummary] = useState(null);
+  const [genres, setGenres] = useState([]);
+  const [selectedGenre, setSelectedGenre] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -16,7 +19,12 @@ const MostWatchedContent = () => {
         const response = await axios.get('/api/most-watched-content', {
           params: { filter, sort },
         });
-        setContent(response.data.content);
+        const contentWithRatings = await Promise.all(response.data.content.map(async (item) => {
+          const rottenTomatoesRating = await getRottenTomatoesRating(item.title);
+          const imdbRating = await getImdbRating(item.title);
+          return { ...item, rottenTomatoesRating, imdbRating };
+        }));
+        setContent(contentWithRatings);
         setWeeklySummary(response.data.weeklySummary);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -26,6 +34,23 @@ const MostWatchedContent = () => {
 
     fetchData();
   }, [filter, sort]);
+
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const response = await axios.get('/api/genres');
+        setGenres(response.data.genres);
+      } catch (error) {
+        console.error('Error fetching genres:', error);
+      }
+    };
+
+    fetchGenres();
+  }, []);
+
+  const handleGenreChange = (e) => {
+    setSelectedGenre(e.target.value);
+  };
 
   return (
     <Container maxW="container.lg" py={8}>
@@ -42,6 +67,11 @@ const MostWatchedContent = () => {
             <option value="rating">Rating</option>
             <option value="date">Date</option>
           </Select>
+          <Select value={selectedGenre} onChange={handleGenreChange} placeholder="Select genre">
+            {genres.map((genre) => (
+              <option key={genre.id} value={genre.name}>{genre.name}</option>
+            ))}
+          </Select>
         </HStack>
         {loading ? (
           <Spinner size="xl" />
@@ -53,6 +83,8 @@ const MostWatchedContent = () => {
                 <Text>Views: {item.views}</Text>
                 <Text>Rating: {item.rating}</Text>
                 <Text>Date: {item.date}</Text>
+                <Text>Rotten Tomatoes Rating: {item.rottenTomatoesRating}</Text>
+                <Text>IMDb Rating: {item.imdbRating}</Text>
               </Box>
             ))}
           </VStack>
