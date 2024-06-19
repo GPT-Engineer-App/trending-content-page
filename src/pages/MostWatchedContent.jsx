@@ -17,16 +17,21 @@ const MostWatchedContent = () => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
+      console.log('Fetching most-watched content...');
       try {
         const response = await axios.get('/api/most-watched-content', {
           params: { filter, sort },
         });
+        console.log('Response from /api/most-watched-content:', response.data);
         if (response.data && response.data.content) {
-          const contentWithRatings = await Promise.all(response.data.content.map(async (item) => {
-            const omdbData = await getOmdbData(item.title);
-            const tmdbData = await getTmdbData(item.title);
-            return { ...item, omdbData, tmdbData };
-          }));
+          const contentWithRatings = await Promise.all(
+            response.data.content.map(async (item) => {
+              const omdbData = await getOmdbData(item.title);
+              const tmdbData = await getTmdbData(item.title);
+              return { ...item, omdbData, tmdbData };
+            })
+          );
+          console.log('Content with ratings:', contentWithRatings);
           setContent(contentWithRatings);
           setWeeklySummary(response.data.weeklySummary);
         } else {
@@ -37,6 +42,8 @@ const MostWatchedContent = () => {
         setError('Error fetching data');
       }
       setLoading(false);
+      console.log('Finished fetching most-watched content.');
+      setLoading(false);
     };
 
     fetchData();
@@ -44,8 +51,10 @@ const MostWatchedContent = () => {
 
   useEffect(() => {
     const fetchGenres = async () => {
+      console.log('Fetching genres...');
       try {
         const response = await axios.get('/api/genres');
+        console.log('Response from /api/genres:', response.data);
         setGenres(response.data.genres);
       } catch (error) {
         console.error('Error fetching genres:', error);
