@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Container, Heading, Select, VStack, Text, Spinner, HStack, Button } from '@chakra-ui/react';
+import { Box, Container, Heading, Select, VStack, Text, Spinner, HStack } from '@chakra-ui/react';
 import axios from 'axios';
 import { getOmdbData, getTmdbData } from '../api/ratings';
 
@@ -11,23 +11,30 @@ const MostWatchedContent = () => {
   const [weeklySummary, setWeeklySummary] = useState(null);
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState('');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
         const response = await axios.get('/api/most-watched-content', {
           params: { filter, sort },
         });
-        const contentWithRatings = await Promise.all(response.data.content.map(async (item) => {
-          const omdbData = await getOmdbData(item.title);
-          const tmdbData = await getTmdbData(item.title);
-          return { ...item, omdbData, tmdbData };
-        }));
-        setContent(contentWithRatings);
-        setWeeklySummary(response.data.weeklySummary);
+        if (response.data && response.data.content) {
+          const contentWithRatings = await Promise.all(response.data.content.map(async (item) => {
+            const omdbData = await getOmdbData(item.title);
+            const tmdbData = await getTmdbData(item.title);
+            return { ...item, omdbData, tmdbData };
+          }));
+          setContent(contentWithRatings);
+          setWeeklySummary(response.data.weeklySummary);
+        } else {
+          setError('No content data available');
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
+        setError('Error fetching data');
       }
       setLoading(false);
     };
@@ -75,6 +82,8 @@ const MostWatchedContent = () => {
         </HStack>
         {loading ? (
           <Spinner size="xl" />
+        ) : error ? (
+          <Text color="red.500">{error}</Text>
         ) : (
           <VStack spacing={4} align="stretch">
             {content.map((item) => (
